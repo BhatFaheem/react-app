@@ -1,28 +1,30 @@
 import videosDB from "./data/data";
 import "./App.css";
-import { useState } from "react";
+import { useReducer, useState } from "react";
 import AddVideo from "./componenets/AddVideo";
 import VideoList from "./componenets/VideoList";
 function App() {
-  const [videos, setVideos] = useState(videosDB);
   const [editableVideo, setEditableVideo] = useState(null);
-
-  function addVideos(video) {
-    setVideos([...videos, { ...video, id: videos.length + 1 }]);
+  function videoReducer(videos, action) {
+    switch (action.type) {
+      case "ADD":
+        return [...videos, { ...action.payload, id: videos.length + 1 }];
+      case "DELETE":
+        return videos.filter((video) => video.id !== action.payload);
+      case "UPDATE":
+        const index = videos.findIndex((v) => v.id === action.payload.id);
+        const newVideos = [...videos];
+        newVideos.splice(index, 1, action.payload);
+        setEditableVideo(null);
+        return newVideos;
+      default:
+        return videos;
+    }
   }
-  function deleteVideo(id) {
-    setVideos(videos.filter(video=> video.id !== id));
-  }
+  const [videos, dispatch] = useReducer(videoReducer, videosDB);
+  // const [videos, setVideos] = useState(videosDB);
   function editVideo(id) {
-    setEditableVideo(videos.find(video=> video.id === id));
-  }
-  function UpdateVideo(video)
-  {
-      const index = videos.findIndex(v =>v.id === video.id);
-      const newVideos = [...videos];
-      newVideos.splice(index , 1 , video);
-      setVideos(newVideos);
-      
+    setEditableVideo(videos.find((video) => video.id === id));
   }
   return (
     <div
@@ -31,8 +33,12 @@ function App() {
         console.log("App");
       }}
     >
-      <AddVideo addVideos={addVideos} UpdateVideo={UpdateVideo} editableVideo = {editableVideo}></AddVideo>
-      <VideoList deleteVideo = {deleteVideo} editVideo = {editVideo} videos={videos}></VideoList>
+      <AddVideo dispatch={dispatch} editableVideo={editableVideo}></AddVideo>
+      <VideoList
+        dispatch={dispatch}
+        editVideo={editVideo}
+        videos={videos}
+      ></VideoList>
     </div>
   );
 }
